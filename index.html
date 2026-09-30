@@ -119,6 +119,27 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 .done{animation:rise .5s both}
 .done p{color:var(--muted);margin:0 0 20px}
 
+
+/* История */
+.hist{padding:6vh 0 10vh}
+.tl{position:relative;margin-top:32px;padding-left:28px;border-left:1px solid var(--line)}
+.tl:empty{display:none}
+.ev{position:relative;padding-bottom:44px}
+.ev:last-child{padding-bottom:0}
+.ev::before{content:"";position:absolute;left:-33px;top:7px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--bg)}
+.ev time{color:var(--muted);font-size:.9rem}
+.ev h3{margin:4px 0 8px;font-size:1.3rem;letter-spacing:-.01em}
+.ev p{color:var(--muted);margin:0 0 16px;max-width:60ch;white-space:pre-line}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.shots button{padding:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel);cursor:zoom-in;aspect-ratio:16/10;transition:border-color .25s,transform .25s}
+.shots button:hover{border-color:var(--accent);transform:translateY(-2px)}
+.shots img{width:100%;height:100%;object-fit:cover;display:block}
+.empty{color:var(--muted)}
+.lb{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(8,10,11,.92);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;cursor:zoom-out}
+.lb.open{opacity:1;visibility:visible}
+.lb img{max-width:100%;max-height:100%;border-radius:6px;transform:scale(.97);transition:transform .3s}
+.lb.open img{transform:none}
+
 @media (max-width:700px){.bg::after{display:none}.bg::before{animation:none;-webkit-mask-image:none;mask-image:none;opacity:.2}}
 @media (max-width:560px){nav a:not(.btn){display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -132,6 +153,7 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
   <nav>
     <a href="#about">О клане</a>
     <a href="#roster">Состав</a>
+    <a href="#history">История клана</a>
     <button class="btn" id="openLogin" type="button">Вход для участников</button>
   </nav>
 </header>
@@ -168,6 +190,12 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
         <li data-rank="Рядовой">Рядовой <span>0</span></li>
         <li data-rank="Рекрут">Рекрут <span>0</span></li>
       </ul>
+    </section>
+
+    <section id="history-preview">
+      <h2>История клана</h2>
+      <p style="color:var(--muted);max-width:52ch;margin:0 0 24px">Операции и памятные моменты СБК: скриншоты и описания событий.</p>
+      <a class="btn" href="#history">Открыть историю</a>
     </section>
 
   </div>
@@ -219,8 +247,16 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
     <div class="done" id="done" hidden>
       <h2>Заявка принята</h2>
       <p>Заявка отправлена. Мы рассмотрим её и свяжемся с вами в Discord.</p>
-      <button class="btn" id="again" type="button">Отправить ещё одну</button>
+      <button class="btn" id="again" type="button">Вернуться на главную страницу</button>
     </div>
+  </div>
+
+  <div class="wrap hist" id="history" hidden>
+    <button class="back" id="backH" type="button">Назад</button>
+    <h1 class="ah">История клана</h1>
+    <p class="lead">События СБК от новых к старым.</p>
+    <p class="empty" id="hist-empty">Записей пока нет. Первые события появятся здесь скоро.</p>
+    <div class="tl" id="tl"></div>
   </div>
 </main>
 
@@ -240,6 +276,8 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
   </div>
 </div>
 
+<div class="lb" id="lb" aria-hidden="true"><img alt=""></div>
+
 <script>
 /* Состав считается автоматически: одна запись участника = +1 к его званию.
    Сейчас список пуст. После подключения Supabase сюда придут строки из таблицы members. */
@@ -257,15 +295,16 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM()});
 document.getElementById('go').onclick=function(){msg.textContent='Демо-версия: вход ещё не подключён к базе.'};
 
 /* Страницы: главная и заявка */
-var home=document.getElementById('home'),apply=document.getElementById('apply');
+var home=document.getElementById('home'),apply=document.getElementById('apply'),hist=document.getElementById('history');
 function route(){
-  var h=location.hash,isA=(h==='#apply');
-  home.hidden=isA; apply.hidden=!isA;
-  if(isA){window.scrollTo(0,0)}
+  var h=location.hash,isA=(h==='#apply'),isH=(h==='#history');
+  home.hidden=isA||isH; apply.hidden=!isA; hist.hidden=!isH;
+  if(isA||isH){window.scrollTo(0,0)}
   else if(h.length>1){var t=document.getElementById(h.slice(1)); if(t){t.scrollIntoView()}}
   else{window.scrollTo(0,0)}
 }
 window.addEventListener('hashchange',route); route();
+document.getElementById('backH').onclick=function(){location.hash='';route()};
 document.getElementById('back').onclick=function(){location.hash=''; route()};
 
 /* Форма заявки */
@@ -310,7 +349,7 @@ function setErr(id,msg){
   e.parentNode.classList.toggle('bad',!!msg);
   return !msg;
 }
-function showDone(){f.hidden=true;document.getElementById('done').hidden=false}
+function showDone(){document.getElementById('back').hidden=true;f.hidden=true;document.getElementById('done').hidden=false}
 f.addEventListener('submit',function(e){
   e.preventDefault();
   var ok=true;
@@ -342,7 +381,42 @@ f.addEventListener('submit',function(e){
     .catch(function(){eSend.textContent='Не удалось отправить заявку. Проверьте интернет и попробуйте ещё раз.'})
     .then(function(){sendBtn.disabled=false;sendBtn.textContent='Отправить заявку'});
 });
-document.getElementById('again').onclick=function(){f.reset();f.hidden=false;document.getElementById('done').hidden=true};
+document.getElementById('again').onclick=function(){f.reset();f.hidden=false;document.getElementById('done').hidden=true;document.getElementById('back').hidden=false;location.hash='';route()};
+
+/* История клана.
+   Чтобы добавить событие, впишите его в список ниже. Скриншоты загрузите в папку history в репозитории. */
+var events=[
+  // {date:'2026-09-30', title:'Название события', text:'Описание события.', images:['history/screen1.jpg','history/screen2.jpg']},
+];
+(function(){
+  var tl=document.getElementById('tl'),empty=document.getElementById('hist-empty'),lb=document.getElementById('lb'),lbi=lb.querySelector('img');
+  var list=events.slice().sort(function(a,b){return a.date<b.date?1:-1});
+  empty.hidden=list.length>0;
+  list.forEach(function(ev){
+    var box=document.createElement('article'); box.className='ev';
+    var t=document.createElement('time'); var d=ev.date.split('-');
+    t.dateTime=ev.date;
+    t.textContent=new Date(+d[0],+d[1]-1,+d[2]).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+    var h=document.createElement('h3'); h.textContent=ev.title;
+    box.appendChild(t); box.appendChild(h);
+    if(ev.text){var p=document.createElement('p'); p.textContent=ev.text; box.appendChild(p)}
+    if(ev.images&&ev.images.length){
+      var g=document.createElement('div'); g.className='shots';
+      ev.images.forEach(function(src){
+        var b=document.createElement('button'); b.type='button'; b.setAttribute('aria-label','Открыть скриншот');
+        var im=document.createElement('img'); im.src=src; im.alt=ev.title; im.loading='lazy';
+        b.appendChild(im);
+        b.onclick=function(){lbi.src=src; lbi.alt=ev.title; lb.classList.add('open'); lb.setAttribute('aria-hidden','false')};
+        g.appendChild(b);
+      });
+      box.appendChild(g);
+    }
+    tl.appendChild(box);
+  });
+  function closeLb(){lb.classList.remove('open'); lb.setAttribute('aria-hidden','true')}
+  lb.addEventListener('click',closeLb);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb()});
+})();
 </script>
 </body>
 </html>
