@@ -212,12 +212,14 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
         <input class="in narrow" id="age" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="--">
         <div class="err" id="e-age"></div>
       </div>
-      <button class="btn solid" type="submit">Отправить заявку</button>
+      <input type="checkbox" id="botcheck" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0">
+      <button class="btn solid" id="send" type="submit">Отправить заявку</button>
+      <div class="err" id="e-send" role="alert"></div>
     </form>
     <div class="done" id="done" hidden>
       <h2>Заявка принята</h2>
-      <p>Это демо-версия: заявка пока никуда не отправляется. Отправку в чат или на почту подключим на следующем этапе.</p>
-      <button class="btn" id="again" type="button">Заполнить заново</button>
+      <p>Заявка отправлена. Мы рассмотрим её и свяжемся с вами в Discord.</p>
+      <button class="btn" id="again" type="button">Отправить ещё одну</button>
     </div>
   </div>
 </main>
@@ -308,6 +310,7 @@ function setErr(id,msg){
   e.parentNode.classList.toggle('bad',!!msg);
   return !msg;
 }
+function showDone(){f.hidden=true;document.getElementById('done').hidden=false}
 f.addEventListener('submit',function(e){
   e.preventDefault();
   var ok=true;
@@ -318,7 +321,26 @@ f.addEventListener('submit',function(e){
   ok=setErr('tz',(sign&&tzn.value!=='')?'':'Выберите + или − и впишите число часов.')&&ok;
   ok=setErr('age',(age.value!==''&&+age.value>=13)?'':'Минимальный возраст 13 лет.')&&ok;
   if(!ok){var bad=f.querySelector('.bad input');if(bad)bad.focus();return}
-  f.hidden=true; document.getElementById('done').hidden=false;
+  var eSend=document.getElementById('e-send'),sendBtn=document.getElementById('send');
+  eSend.textContent='';
+  if(document.getElementById('botcheck').checked){showDone();return}
+  var t=cells.map(function(c){return c.value});
+  var payload={
+    access_key:'1802e89a-5989-42e7-9937-6b658a89dad2',
+    subject:'Новая заявка в СБК',
+    from_name:'Сайт СБК',
+    discord:dc.value,
+    steam:steam.value.trim(),
+    playtime:t[0]+' мес. '+t[1]+' дн. '+t[2]+' ч. '+t[3]+' мин.',
+    timezone_from_msk:'МСК '+sign.value+tzn.value,
+    age:age.value
+  };
+  sendBtn.disabled=true; sendBtn.textContent='Отправляем...';
+  fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(d){if(d&&d.success){showDone()}else{throw new Error('fail')}})
+    .catch(function(){eSend.textContent='Не удалось отправить заявку. Проверьте интернет и попробуйте ещё раз.'})
+    .then(function(){sendBtn.disabled=false;sendBtn.textContent='Отправить заявку'});
 });
 document.getElementById('again').onclick=function(){f.reset();f.hidden=false;document.getElementById('done').hidden=true};
 </script>
