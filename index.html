@@ -159,6 +159,7 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 .code-num small{display:block;font-size:.75rem;font-weight:500;letter-spacing:0;color:var(--muted);margin-bottom:8px}
 .code-tip{display:flex;align-items:center;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;padding:0;color:var(--accent);font-weight:600;border-left:1px solid transparent;transition:max-width .6s cubic-bezier(.2,.7,.2,1),opacity .4s,padding .6s}
 .code:hover .code-tip,.code.open .code-tip,.code:focus-visible .code-tip{max-width:420px;opacity:1;padding:0 26px;border-left-color:var(--line)}
+.codes{display:grid;gap:12px;justify-items:start}
 .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
 .tbl{width:100%;min-width:760px;border-collapse:collapse}
 .tbl th,.tbl td{padding:16px 18px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
@@ -307,12 +308,6 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
     <p class="lead">Материалы для участников СБК.</p>
     <div class="tabs" id="tabs" role="tablist"></div>
     <div id="panes">
-      <div class="pane" data-tab="Коды" data-static="1" hidden>
-        <div class="code" id="code64" tabindex="0" role="button" aria-label="Код 64">
-          <div class="code-num"><small>Код</small>64</div>
-          <div class="code-tip">Ликвидация всех без исключений</div>
-        </div>
-      </div>
       <div class="pane" data-tab="Бой" data-static="1" hidden>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -603,6 +598,7 @@ function loadMaterials(name){
   pane.innerHTML='<p class="empty">Загружаем...</p>';
   sb.from('materials').select('title,body,created_at').eq('tab',name).order('created_at',{ascending:false}).then(function(r){
     pane.innerHTML='';
+    if(name==='Коды'){renderCodes(pane,(r.error||!r.data)?[]:r.data); if(!r.error){loaded[name]=true} return}
     if(r.error||!r.data||!r.data.length){
       var e=document.createElement('p'); e.className='empty'; e.textContent='Пока пусто. Материалы появятся позже.'; pane.appendChild(e);
       if(!r.error){loaded[name]=true}
@@ -620,9 +616,28 @@ function loadMaterials(name){
   });
 }
 document.getElementById('backA').onclick=function(){location.hash='#cabinet'};
-var code64=document.getElementById('code64');
-code64.onclick=function(){code64.classList.toggle('open')};
-code64.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();code64.classList.toggle('open')}});
+
+function makeCode(num,tip){
+  var c=document.createElement('div'); c.className='code'; c.tabIndex=0; c.setAttribute('role','button');
+  var n=document.createElement('div'); n.className='code-num';
+  var lab=document.createElement('small'); lab.textContent='Код'; n.appendChild(lab); n.appendChild(document.createTextNode(num));
+  var t=document.createElement('div'); t.className='code-tip'; t.textContent=tip;
+  c.appendChild(n); c.appendChild(t);
+  c.onclick=function(){c.classList.toggle('open')};
+  c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();c.classList.toggle('open')}});
+  return c;
+}
+/* Коды: строки заголовка (Код 64, Код 40...) и строки текста идут в одном порядке */
+function renderCodes(pane,rows){
+  var box=document.createElement('div'); box.className='codes'; var count=0;
+  rows.forEach(function(x){
+    var titles=(x.title||'').split('\n').map(function(v){return v.trim()}).filter(Boolean);
+    var tips=(x.body||'').split('\n').map(function(v){return v.trim()}).filter(Boolean);
+    titles.forEach(function(t,i){box.appendChild(makeCode(t.replace(/^код\s*/i,''),tips[i]||'')); count++});
+  });
+  if(!count){box.appendChild(makeCode('64','Ликвидация всех без исключений'))}
+  pane.appendChild(box);
+}
 </script>
 </body>
 </html>
