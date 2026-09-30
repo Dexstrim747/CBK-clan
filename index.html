@@ -287,78 +287,7 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 
 <div class="lb" id="lb" aria-hidden="true"><img alt=""></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4">
-/* Supabase: вход и данные участников */
-var SB_URL='https://gdkmjnenguvvfettanyz.supabase.co';
-var SB_KEY='sb_publishable_SkobecDQlBEOITfcU_zvDA_aBW9cX7D';
-var LOGIN_DOMAIN='@sbk.example.com';
-var RANK_ORDER=['Штабной командир','ССО','Командир отряда','Лейтенант','Сержант','Капрал','Рядовой','Рекрут'];
-var sb=null, me=null;
-try{sb=window.supabase.createClient(SB_URL,SB_KEY)}catch(e){}
-var loginBtn=document.getElementById('openLogin');
-var uIn=document.getElementById('u'),pIn=document.getElementById('p'),goBtn=document.getElementById('go');
-
-function setHeader(){loginBtn.textContent=me?'Кабинет':'Вход для участников'}
-loginBtn.onclick=function(){if(me){location.hash='#cabinet'}else{openM()}};
-uIn.addEventListener('input',function(){clean(uIn,/[^A-Za-z0-9_.-]/g)});
-uIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();pIn.focus()}});
-pIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doLogin()}});
-goBtn.onclick=doLogin;
-
-function doLogin(){
-  if(!sb){msg.textContent='Нет связи с сервером входа.';return}
-  var login=uIn.value.trim().toLowerCase();
-  if(!login||!pIn.value){msg.textContent='Введите логин и пароль.';return}
-  goBtn.disabled=true; msg.textContent='Входим...';
-  sb.auth.signInWithPassword({email:login+LOGIN_DOMAIN,password:pIn.value}).then(function(r){
-    goBtn.disabled=false;
-    if(r.error||!r.data||!r.data.user){msg.textContent='Неверный логин или пароль.';return}
-    me=r.data.user; pIn.value=''; closeM(); setHeader();
-    if(location.hash==='#cabinet'){route()}else{location.hash='#cabinet'}
-  }).catch(function(){goBtn.disabled=false;msg.textContent='Не удалось войти. Попробуйте ещё раз.'});
-}
-
-function loadCounts(){
-  sb.rpc('rank_counts').then(function(r){
-    if(r.error||!r.data)return;
-    var map={}; r.data.forEach(function(x){map[x.rank]=Number(x.total)});
-    document.querySelectorAll('#ranks li').forEach(function(li){li.querySelector('span').textContent=map[li.dataset.rank]||0});
-  });
-}
-
-function loadCabinet(){
-  var list=document.getElementById('cList'),meta=document.getElementById('cMeta');
-  sb.from('profiles').select('id,callsign,rank,squad').then(function(r){
-    if(r.error||!r.data){meta.textContent='Не удалось загрузить данные.';return}
-    var rows=r.data.slice().sort(function(a,b){
-      var d=RANK_ORDER.indexOf(a.rank)-RANK_ORDER.indexOf(b.rank);
-      return d||a.callsign.localeCompare(b.callsign,'ru');
-    });
-    var mine=rows.filter(function(x){return x.id===me.id})[0];
-    document.getElementById('cName').textContent=mine?mine.callsign:'Кабинет';
-    meta.textContent=mine?(mine.rank+(mine.squad?', '+mine.squad:'')):'';
-    list.innerHTML='';
-    rows.forEach(function(x){
-      var li=document.createElement('li'); li.appendChild(document.createTextNode(x.callsign));
-      var sp=document.createElement('span'); sp.textContent=x.rank+(x.squad?', '+x.squad:'');
-      li.appendChild(sp); list.appendChild(li);
-    });
-  });
-}
-
-document.getElementById('backC').onclick=function(){location.hash='';route()};
-document.getElementById('logout').onclick=function(){
-  sb.auth.signOut().then(function(){me=null;setHeader();location.hash='';route()});
-};
-
-if(sb){
-  loadCounts();
-  sb.auth.getSession().then(function(r){
-    me=(r.data&&r.data.session)?r.data.session.user:null; setHeader();
-    if(location.hash==='#cabinet'&&!me){location.hash='';route();openM()}else{route()}
-  });
-}
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <script>
 /* Состав считается автоматически: одна запись участника = +1 к его званию.
    Сейчас список пуст. После подключения Supabase сюда придут строки из таблицы members. */
@@ -499,6 +428,78 @@ var events=[
   lb.addEventListener('click',closeLb);
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb()});
 })();
+
+/* Supabase: вход и данные участников */
+var SB_URL='https://gdkmjnenguvvfettanyz.supabase.co';
+var SB_KEY='sb_publishable_SkobecDQlBEOITfcU_zvDA_aBW9cX7D';
+var LOGIN_DOMAIN='@sbk.example.com';
+var RANK_ORDER=['Штабной командир','ССО','Командир отряда','Лейтенант','Сержант','Капрал','Рядовой','Рекрут'];
+var sb=null, me=null;
+try{sb=window.supabase.createClient(SB_URL,SB_KEY)}catch(e){}
+var loginBtn=document.getElementById('openLogin');
+var uIn=document.getElementById('u'),pIn=document.getElementById('p'),goBtn=document.getElementById('go');
+
+function setHeader(){loginBtn.textContent=me?'Кабинет':'Вход для участников'}
+loginBtn.onclick=function(){if(me){location.hash='#cabinet'}else{openM()}};
+uIn.addEventListener('input',function(){clean(uIn,/[^A-Za-z0-9_.-]/g)});
+uIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();pIn.focus()}});
+pIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doLogin()}});
+goBtn.onclick=doLogin;
+
+function doLogin(){
+  if(!sb){msg.textContent='Нет связи с сервером входа.';return}
+  var login=uIn.value.trim().toLowerCase();
+  if(!login||!pIn.value){msg.textContent='Введите логин и пароль.';return}
+  goBtn.disabled=true; msg.textContent='Входим...';
+  sb.auth.signInWithPassword({email:login+LOGIN_DOMAIN,password:pIn.value}).then(function(r){
+    goBtn.disabled=false;
+    if(r.error||!r.data||!r.data.user){msg.textContent='Неверный логин или пароль.';return}
+    me=r.data.user; pIn.value=''; closeM(); setHeader();
+    if(location.hash==='#cabinet'){route()}else{location.hash='#cabinet'}
+  }).catch(function(){goBtn.disabled=false;msg.textContent='Не удалось войти. Попробуйте ещё раз.'});
+}
+
+function loadCounts(){
+  sb.rpc('rank_counts').then(function(r){
+    if(r.error||!r.data)return;
+    var map={}; r.data.forEach(function(x){map[x.rank]=Number(x.total)});
+    document.querySelectorAll('#ranks li').forEach(function(li){li.querySelector('span').textContent=map[li.dataset.rank]||0});
+  });
+}
+
+function loadCabinet(){
+  var list=document.getElementById('cList'),meta=document.getElementById('cMeta');
+  sb.from('profiles').select('id,callsign,rank,squad').then(function(r){
+    if(r.error||!r.data){meta.textContent='Не удалось загрузить данные.';return}
+    var rows=r.data.slice().sort(function(a,b){
+      var d=RANK_ORDER.indexOf(a.rank)-RANK_ORDER.indexOf(b.rank);
+      return d||a.callsign.localeCompare(b.callsign,'ru');
+    });
+    var mine=rows.filter(function(x){return x.id===me.id})[0];
+    document.getElementById('cName').textContent=mine?mine.callsign:'Кабинет';
+    meta.textContent=mine?(mine.rank+(mine.squad?', '+mine.squad:'')):'';
+    list.innerHTML='';
+    rows.forEach(function(x){
+      var li=document.createElement('li'); li.appendChild(document.createTextNode(x.callsign));
+      var sp=document.createElement('span'); sp.textContent=x.rank+(x.squad?', '+x.squad:'');
+      li.appendChild(sp); list.appendChild(li);
+    });
+  });
+}
+
+document.getElementById('backC').onclick=function(){location.hash='';route()};
+document.getElementById('logout').onclick=function(){
+  sb.auth.signOut().then(function(){me=null;setHeader();location.hash='';route()});
+};
+
+if(sb){
+  loadCounts();
+  sb.auth.getSession().then(function(r){
+    me=(r.data&&r.data.session)?r.data.session.user:null; setHeader();
+    if(location.hash==='#cabinet'&&!me){location.hash='';route();openM()}else{route()}
+  });
+}
+
 </script>
 </body>
 </html>
