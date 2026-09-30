@@ -140,6 +140,37 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 .lb img{max-width:100%;max-height:100%;border-radius:6px;transform:scale(.97);transition:transform .3s}
 .lb.open img{transform:none}
 
+
+/* Учебный центр */
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:24px 0 28px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;background:none;border:0;color:var(--muted);font:600 .95rem Manrope,system-ui,sans-serif;padding:12px 14px;cursor:pointer;position:relative;transition:color .2s}
+.tab::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transition:transform .25s}
+.tab:hover,.tab.on{color:var(--text)}
+.tab.on::after{transform:scaleX(1)}
+.pane{animation:rise .35s both}
+.post{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;margin-bottom:12px}
+.post h3{margin:0 0 4px}
+.post time{color:var(--muted);font-size:.85rem}
+.post p{margin:10px 0 0;color:#c4c8c1;white-space:pre-line}
+.code{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;cursor:pointer;transition:border-color .3s}
+.code:hover,.code.open,.code:focus-visible{border-color:var(--accent)}
+.code-num{padding:18px 28px;font-size:2.6rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+.code-num small{display:block;font-size:.75rem;font-weight:500;letter-spacing:0;color:var(--muted);margin-bottom:8px}
+.code-tip{display:flex;align-items:center;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;padding:0;color:var(--accent);font-weight:600;border-left:1px solid transparent;transition:max-width .6s cubic-bezier(.2,.7,.2,1),opacity .4s,padding .6s}
+.code:hover .code-tip,.code.open .code-tip,.code:focus-visible .code-tip{max-width:420px;opacity:1;padding:0 26px;border-left-color:var(--line)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.tbl{width:100%;min-width:760px;border-collapse:collapse}
+.tbl th,.tbl td{padding:16px 18px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.tbl th+th,.tbl td+td{border-left:1px solid var(--line)}
+.tbl th{background:var(--panel);font-weight:700}
+.tbl td{color:#c4c8c1;line-height:1.6}
+.tbl td:first-child{color:var(--text);font-weight:700;width:17%}
+.tbl tbody tr{transition:background .2s}
+.tbl tbody tr:hover{background:#1c2226}
+.tbl tbody tr:last-child td{border-bottom:0}
+@media (max-width:560px){.code-tip{white-space:normal}.code:hover .code-tip,.code.open .code-tip,.code:focus-visible .code-tip{max-width:200px;padding:0 18px}}
+
 @media (max-width:700px){.bg::after{display:none}.bg::before{animation:none;-webkit-mask-image:none;mask-image:none;opacity:.2}}
 @media (max-width:560px){nav a:not(.btn){display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -154,6 +185,7 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
     <a href="#about">О клане</a>
     <a href="#roster">Состав</a>
     <a href="#history">История клана</a>
+    <a href="#academy" id="navAcademy" hidden>Учебный центр</a>
     <button class="btn" id="openLogin" type="button">Вход для участников</button>
   </nav>
 </header>
@@ -263,9 +295,51 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
     <button class="back" id="backC" type="button">Назад</button>
     <h1 class="ah" id="cName">Кабинет</h1>
     <p class="lead" id="cMeta"></p>
+    <a class="btn solid" href="#academy" style="margin-bottom:36px">Учебный центр</a>
     <h2>Состав клана</h2>
     <ul class="ranks" id="cList"></ul>
     <button class="btn" id="logout" type="button" style="margin-top:32px">Выйти</button>
+  </div>
+
+  <div class="wrap hist" id="academy" hidden>
+    <button class="back" id="backA" type="button">Назад</button>
+    <h1 class="ah">Учебный центр</h1>
+    <p class="lead">Материалы для участников СБК.</p>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div id="panes">
+      <div class="pane" data-tab="Коды" data-static="1" hidden>
+        <div class="code" id="code64" tabindex="0" role="button" aria-label="Код 64">
+          <div class="code-num"><small>Код</small>64</div>
+          <div class="code-tip">Ликвидация всех без исключений</div>
+        </div>
+      </div>
+      <div class="pane" data-tab="Бой" data-static="1" hidden>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Условия боя</th><th>Роль пехоты</th><th>Роль техники (танков/БМП)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Городской бой (Штурм)</td>
+                <td>Идет из укрытия в укрытие за или вдоль бронетехники, проверяя уязвимые зоны (окна домов, подвалы, окопы и т.д.), прикрывая не только технику, но и самих себя.</td>
+                <td>Движется медленно, ждет команды/доклада от пехоты о возможности передвижения дальше.</td>
+              </tr>
+              <tr>
+                <td>Поле/лесополоса</td>
+                <td>Зачищает укрытия противников (штурмует/кидает гранаты и т.д.), передвигается в приседе/ползком, по возможности движется ЗА техникой на безопасном расстоянии.</td>
+                <td>Движется медленно, давая пехоте держаться за ней и прикрывать ее собой, по возможности против пехоты использовать фугасы и пулеметы, использовать дымы/дымовые снаряды для прикрытия союзной техники, если та повреждена/остановлена напором противника.</td>
+              </tr>
+              <tr>
+                <td>Оборона</td>
+                <td>Держит позиции до истощения, по возможности блокирует все проходы в тыл любыми способами, прикрывает технику, при необходимости перекрывает противнику обзор (дымовые гранаты и т.д.).</td>
+                <td>Стоит в капонирах (выкопанная область земли под технику), старается держать оборону до истощения, ведет огонь из засад, атакует из скрытных укрытий.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -305,12 +379,14 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM()});
 document.getElementById('go').onclick=function(){msg.textContent='Демо-версия: вход ещё не подключён к базе.'};
 
 /* Страницы: главная и заявка */
-var home=document.getElementById('home'),apply=document.getElementById('apply'),hist=document.getElementById('history'),cab=document.getElementById('cabinet');
+var home=document.getElementById('home'),apply=document.getElementById('apply'),hist=document.getElementById('history'),cab=document.getElementById('cabinet'),acad=document.getElementById('academy');
 function route(){
-  var h=location.hash,isA=(h==='#apply'),isH=(h==='#history'),isC=(h==='#cabinet');
-  home.hidden=isA||isH||isC; apply.hidden=!isA; hist.hidden=!isH; cab.hidden=!isC;
+  var h=location.hash,isA=(h==='#apply'),isH=(h==='#history'),isC=(h==='#cabinet'),isAc=(h==='#academy');
+  if((isC||isAc)&&authReady&&!me){location.hash='';openM();return}
+  home.hidden=isA||isH||isC||isAc; apply.hidden=!isA; hist.hidden=!isH; cab.hidden=!isC; acad.hidden=!isAc;
   if(isC&&me){loadCabinet()}
-  if(isA||isH||isC){window.scrollTo(0,0)}
+  if(isAc&&me&&!curTab){showTab(TABS[0])}
+  if(isA||isH||isC||isAc){window.scrollTo(0,0)}
   else if(h.length>1){var t=document.getElementById(h.slice(1)); if(t){t.scrollIntoView()}}
   else{window.scrollTo(0,0)}
 }
@@ -439,7 +515,7 @@ try{sb=window.supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 var loginBtn=document.getElementById('openLogin');
 var uIn=document.getElementById('u'),pIn=document.getElementById('p'),goBtn=document.getElementById('go');
 
-function setHeader(){loginBtn.textContent=me?'Кабинет':'Вход для участников'}
+function setHeader(){loginBtn.textContent=me?'Кабинет':'Вход для участников'; document.getElementById('navAcademy').hidden=!me}
 loginBtn.onclick=function(){if(me){location.hash='#cabinet'}else{openM()}};
 uIn.addEventListener('input',function(){clean(uIn,/[^A-Za-z0-9_.-]/g)});
 uIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();pIn.focus()}});
@@ -489,17 +565,64 @@ function loadCabinet(){
 
 document.getElementById('backC').onclick=function(){location.hash='';route()};
 document.getElementById('logout').onclick=function(){
-  sb.auth.signOut().then(function(){me=null;setHeader();location.hash='';route()});
+  sb.auth.signOut().then(function(){
+    me=null; curTab=null; loaded={};
+    [].forEach.call(panesEl.children,function(p){if(!p.dataset.static)p.innerHTML=''});
+    setHeader(); location.hash=''; route();
+  });
 };
 
 if(sb){
   loadCounts();
   sb.auth.getSession().then(function(r){
     me=(r.data&&r.data.session)?r.data.session.user:null; setHeader();
-    if(location.hash==='#cabinet'&&!me){location.hash='';route();openM()}else{route()}
+    authReady=true; route();
   });
 }
 
+
+/* Учебный центр */
+var authReady=false, curTab=null, loaded={};
+var TABS=['Приказы','Коды','Строевая подготовка','Оружейная','Звания','Перевод','Объявления','Отпуск','Бой'];
+var tabsEl=document.getElementById('tabs'), panesEl=document.getElementById('panes');
+TABS.forEach(function(name){
+  var b=document.createElement('button'); b.type='button'; b.className='tab'; b.textContent=name; b.dataset.tab=name;
+  b.setAttribute('role','tab'); b.onclick=function(){showTab(name)}; tabsEl.appendChild(b);
+  if(!panesEl.querySelector('[data-tab="'+name+'"]')){
+    var pane=document.createElement('div'); pane.className='pane'; pane.dataset.tab=name; pane.hidden=true; panesEl.appendChild(pane);
+  }
+});
+function showTab(name){
+  curTab=name;
+  [].forEach.call(tabsEl.children,function(b){var on=b.dataset.tab===name; b.classList.toggle('on',on); b.setAttribute('aria-selected',on)});
+  [].forEach.call(panesEl.children,function(p){p.hidden=p.dataset.tab!==name});
+  if(!panesEl.querySelector('[data-tab="'+name+'"]').dataset.static&&!loaded[name]){loadMaterials(name)}
+}
+function loadMaterials(name){
+  var pane=panesEl.querySelector('[data-tab="'+name+'"]');
+  pane.innerHTML='<p class="empty">Загружаем...</p>';
+  sb.from('materials').select('title,body,created_at').eq('tab',name).order('created_at',{ascending:false}).then(function(r){
+    pane.innerHTML='';
+    if(r.error||!r.data||!r.data.length){
+      var e=document.createElement('p'); e.className='empty'; e.textContent='Пока пусто. Материалы появятся позже.'; pane.appendChild(e);
+      if(!r.error){loaded[name]=true}
+      return;
+    }
+    loaded[name]=true;
+    r.data.forEach(function(x){
+      var card=document.createElement('article'); card.className='post';
+      var h=document.createElement('h3'); h.textContent=x.title; card.appendChild(h);
+      var t=document.createElement('time'); var dt=new Date(x.created_at);
+      t.textContent=dt.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}); card.appendChild(t);
+      if(x.body){var p=document.createElement('p'); p.textContent=x.body; card.appendChild(p)}
+      pane.appendChild(card);
+    });
+  });
+}
+document.getElementById('backA').onclick=function(){location.hash='#cabinet'};
+var code64=document.getElementById('code64');
+code64.onclick=function(){code64.classList.toggle('open')};
+code64.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();code64.classList.toggle('open')}});
 </script>
 </body>
 </html>
