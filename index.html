@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>СБК</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1214; --panel:#161a1d; --line:#252b30; --text:#e6e8e3; --muted:#8a9297; --accent:#b9b68c; --accent-ink:#14170f;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-theme="light"],:root:not([data-theme="light"]){color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6;overflow-x:hidden}
+
+/* Фон: сетка + медленный радар-луч */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg::before{content:"";position:absolute;inset:-50px;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;opacity:.45;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 70%);animation:drift 40s linear infinite}
+.bg::after{content:"";position:absolute;left:50%;top:30%;width:140vmax;height:140vmax;margin:-70vmax 0 0 -70vmax;
+  background:conic-gradient(from 0deg,rgba(185,182,140,.10),transparent 18%,transparent 100%);animation:sweep 18s linear infinite}
+@keyframes drift{to{transform:translate(56px,56px)}}
+@keyframes sweep{to{transform:rotate(360deg)}}
+
+main,header,footer{position:relative;z-index:1}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+
+header{display:flex;justify-content:space-between;align-items:center;max-width:960px;margin:0 auto;padding:20px 24px}
+.logo{font-weight:800;letter-spacing:.02em;text-decoration:none;color:var(--text)}
+nav{display:flex;gap:22px;align-items:center}
+nav a{color:var(--muted);text-decoration:none;font-size:.95rem;position:relative;transition:color .2s}
+nav a:not(.btn)::after{content:"";position:absolute;left:0;bottom:-4px;height:1px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+nav a:not(.btn):hover{color:var(--text)}
+nav a:not(.btn):hover::after{transform:scaleX(1)}
+
+/* Кнопки */
+.btn{display:inline-block;border:1px solid var(--accent);color:var(--accent);background:transparent;padding:11px 22px;border-radius:6px;font:600 .95rem Manrope,system-ui,sans-serif;text-decoration:none;cursor:pointer;position:relative;overflow:hidden;z-index:0;transition:color .25s,transform .15s}
+.btn::before{content:"";position:absolute;inset:0;background:var(--accent);transform:translateY(101%);transition:transform .25s ease;z-index:-1}
+.btn:hover{color:var(--accent-ink)}
+.btn:hover::before{transform:translateY(0)}
+.btn:active{transform:scale(.97)}
+.btn.solid{background:var(--accent);color:var(--accent-ink)}
+.btn.solid::before{background:var(--text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* Hero */
+.hero{padding:14vh 0 12vh}
+.hero h1{font-size:clamp(2.6rem,9vw,5.5rem);line-height:1.02;letter-spacing:-.03em;margin:0 0 20px;font-weight:800}
+.hero p{max-width:46ch;color:var(--muted);font-size:1.1rem;margin:0 0 32px}
+.hero .actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero>*{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.hero>*:nth-child(2){animation-delay:.12s}.hero>*:nth-child(3){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+section{padding:64px 0;border-top:1px solid var(--line)}
+h2{font-size:1.6rem;margin:0 0 24px;letter-spacing:-.01em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:22px;transition:border-color .25s,transform .25s}
+.card:hover{border-color:var(--accent);transform:translateY(-3px)}
+.card h3{margin:0 0 6px;font-size:1.05rem}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+
+.ranks{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ranks li{display:flex;justify-content:space-between;gap:16px;padding:14px 20px;background:var(--panel);transition:background .2s,padding-left .2s}
+.ranks li+li{border-top:1px solid var(--line)}
+.ranks li:hover{background:#1c2226;padding-left:26px}
+.ranks span{color:var(--muted)}
+
+footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);max-width:960px;margin:0 auto}
+
+/* Окно входа */
+.modal{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:24px;background:rgba(8,10,11,.7);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.modal.open{opacity:1;visibility:visible}
+.box{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;transform:translateY(14px) scale(.98);transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.modal.open .box{transform:none}
+.box h2{margin-bottom:6px}
+.box small{color:var(--muted);display:block;margin-bottom:18px}
+.box label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 6px}
+.box input{width:100%;padding:11px 12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;transition:border-color .2s,box-shadow .2s}
+.box input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(185,182,140,.15)}
+.box .btn{width:100%;margin-top:20px}
+.close{background:none;border:0;color:var(--muted);cursor:pointer;float:right;font-size:1.3rem;transition:color .2s,transform .2s}
+.close:hover{color:var(--text);transform:rotate(90deg)}
+.msg{margin-top:14px;font-size:.9rem;color:var(--accent);min-height:1.4em}
+
+
+/* Заявка */
+.apply{padding:6vh 0 10vh;max-width:620px}
+.back{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:6px 0;margin-bottom:24px;transition:color .2s,transform .2s}
+.back:hover{color:var(--text);transform:translateX(-4px)}
+.ah{font-size:clamp(2rem,6vw,3rem);letter-spacing:-.02em;margin:0 0 8px}
+.lead{color:var(--muted);margin:0 0 32px}
+.field{margin-bottom:24px}
+.field>label{display:block;font-weight:600;margin-bottom:8px}
+.field small{color:var(--muted);font-weight:400;margin-left:6px}
+.in{width:100%;padding:12px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;transition:border-color .2s,box-shadow .2s}
+.in.narrow{width:6.5rem;text-align:center}
+.in:focus,.cell:focus-within{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(185,182,140,.15)}
+.seg{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cell{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 14px;transition:border-color .2s,box-shadow .2s}
+.cell input{width:2.4ch;border:0;background:transparent;color:var(--text);font:inherit;text-align:center;padding:8px 0}
+.cell input:focus{outline:none}
+.cell span{color:var(--muted);font-size:.9rem}
+.sign{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.sign label{margin:0;cursor:pointer}
+.sign input{position:absolute;opacity:0;pointer-events:none}
+.sign span{display:block;padding:10px 18px;background:var(--panel);color:var(--muted);font-weight:700;transition:background .2s,color .2s}
+.sign label+label span{border-left:1px solid var(--line)}
+.sign input:checked+span{background:var(--accent);color:var(--accent-ink)}
+.sign input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-2px}
+.err{color:#d9907f;font-size:.88rem;min-height:0;margin-top:6px}
+.err:empty{display:none}
+.field.bad .in,.field.bad .cell,.field.bad .sign{border-color:#d9907f}
+.done{animation:rise .5s both}
+.done p{color:var(--muted);margin:0 0 20px}
+
+@media (max-width:560px){nav a:not(.btn){display:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+
+<header>
+  <a class="logo" href="#">СБК</a>
+  <nav>
+    <a href="#about">О клане</a>
+    <a href="#roster">Состав</a>
+    <button class="btn" id="openLogin" type="button">Вход для участников</button>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap" id="home">
+    <div class="hero">
+      <h1>Дисциплина.<br>Порядок. Результат.</h1>
+      <p>Военный клан на сервере Garry's Mod. Здесь собраны устав, состав и всё, что нужно бойцу между операциями.</p>
+      <div class="actions">
+        <a class="btn solid" href="#apply">Подать заявку</a>
+        <a class="btn" href="#about">О клане</a>
+      </div>
+    </div>
+
+    <section id="about">
+      <h2>О клане</h2>
+      <div class="grid">
+        <div class="card"><h3>Слаженная работа</h3><p>Операции идут по плану, у каждого своя роль и зона ответственности.</p></div>
+        <div class="card"><h3>Чёткая структура</h3><p>Звания, отряды и понятная цепочка командования.</p></div>
+        <div class="card"><h3>Свой сайт</h3><p>Приказы, расписание и материалы для участников в одном месте.</p></div>
+      </div>
+    </section>
+
+    <section id="roster">
+      <h2>Состав</h2>
+      <ul class="ranks" id="ranks">
+        <li data-rank="Штабной командир">Штабной командир <span>0</span></li>
+        <li data-rank="ССО">ССО <span>0</span></li>
+        <li data-rank="Командир отряда">Командир отряда <span>0</span></li>
+        <li data-rank="Лейтенант">Лейтенант <span>0</span></li>
+        <li data-rank="Сержант">Сержант <span>0</span></li>
+        <li data-rank="Капрал">Капрал <span>0</span></li>
+        <li data-rank="Рядовой">Рядовой <span>0</span></li>
+        <li data-rank="Рекрут">Рекрут <span>0</span></li>
+      </ul>
+    </section>
+
+  </div>
+  <div class="wrap apply" id="apply" hidden>
+    <button class="back" id="back" type="button">Назад</button>
+    <h1 class="ah">Заявка в СБК</h1>
+    <p class="lead">Заполните все поля. Возраст от 13 лет.</p>
+    <form id="form" novalidate>
+      <div class="field">
+        <label for="dc">Username Discord</label>
+        <input class="in" id="dc" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="username">
+        <div class="err" id="e-dc"></div>
+      </div>
+      <div class="field">
+        <label for="steam">Профиль Steam</label>
+        <input class="in" id="steam" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://steamcommunity.com/id/...">
+        <div class="err" id="e-steam"></div>
+      </div>
+      <div class="field">
+        <label>Наигранное время на сервере <small>команда /time в чате</small></label>
+        <div class="seg" id="time">
+          <label class="cell"><input inputmode="numeric" maxlength="2" data-max="99" placeholder="--" aria-label="Месяцев"><span>месяцев</span></label>
+          <label class="cell"><input inputmode="numeric" maxlength="2" data-max="31" placeholder="--" aria-label="Дней"><span>дней</span></label>
+          <label class="cell"><input inputmode="numeric" maxlength="2" data-max="23" placeholder="--" aria-label="Часов"><span>часов</span></label>
+          <label class="cell"><input inputmode="numeric" maxlength="2" data-max="59" placeholder="--" aria-label="Минут"><span>минут</span></label>
+        </div>
+        <div class="err" id="e-time"></div>
+      </div>
+      <div class="field">
+        <label>Часовой пояс от МСК (UTC)</label>
+        <div class="seg">
+          <div class="sign" role="radiogroup" aria-label="Знак">
+            <label><input type="radio" name="tzs" value="+"><span>+</span></label>
+            <label><input type="radio" name="tzs" value="-"><span>&minus;</span></label>
+          </div>
+          <label class="cell"><input id="tzn" inputmode="numeric" maxlength="2" data-max="14" placeholder="--" aria-label="Часов от МСК"><span>ч от МСК</span></label>
+        </div>
+        <div class="err" id="e-tz"></div>
+      </div>
+      <div class="field">
+        <label for="age">Возраст <small>минимум 13 лет</small></label>
+        <input class="in narrow" id="age" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="--">
+        <div class="err" id="e-age"></div>
+      </div>
+      <button class="btn solid" type="submit">Отправить заявку</button>
+    </form>
+    <div class="done" id="done" hidden>
+      <h2>Заявка принята</h2>
+      <p>Это демо-версия: заявка пока никуда не отправляется. Отправку в чат или на почту подключим на следующем этапе.</p>
+      <button class="btn" id="again" type="button">Заполнить заново</button>
+    </div>
+  </div>
+</main>
+
+<footer>СБК. Сайт не имеет никакого отношения к реальным военным отрядам, взводам и так далее. Сайт создан в целях координации участников клана. Клан был создан на сервере Garry's Mod.</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="lt">
+  <div class="box">
+    <button class="close" id="closeLogin" type="button" aria-label="Закрыть">×</button>
+    <h2 id="lt">Вход</h2>
+    <small>Аккаунты выдаёт командование.</small>
+    <label for="u">Позывной</label>
+    <input id="u" autocomplete="username">
+    <label for="p">Пароль</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <button class="btn solid" id="go" type="button">Войти</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+/* Состав считается автоматически: одна запись участника = +1 к его званию.
+   Сейчас список пуст. После подключения Supabase сюда придут строки из таблицы members. */
+var members=[]; // пример: [{rank:'Штабной командир'},{rank:'ССО Командир отряда'}]
+document.querySelectorAll('#ranks li').forEach(function(li){
+  li.querySelector('span').textContent=members.filter(function(x){return x.rank===li.dataset.rank}).length;
+});
+var m=document.getElementById('modal'),msg=document.getElementById('msg');
+function openM(){m.classList.add('open');setTimeout(function(){document.getElementById('u').focus()},250)}
+function closeM(){m.classList.remove('open');msg.textContent=''}
+document.getElementById('openLogin').onclick=openM;
+document.getElementById('closeLogin').onclick=closeM;
+m.addEventListener('click',function(e){if(e.target===m)closeM()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM()});
+document.getElementById('go').onclick=function(){msg.textContent='Демо-версия: вход ещё не подключён к базе.'};
+
+/* Страницы: главная и заявка */
+var home=document.getElementById('home'),apply=document.getElementById('apply');
+function route(){
+  var h=location.hash,isA=(h==='#apply');
+  home.hidden=isA; apply.hidden=!isA;
+  if(isA){window.scrollTo(0,0)}
+  else if(h.length>1){var t=document.getElementById(h.slice(1)); if(t){t.scrollIntoView()}}
+  else{window.scrollTo(0,0)}
+}
+window.addEventListener('hashchange',route); route();
+document.getElementById('back').onclick=function(){location.hash=''; route()};
+
+/* Форма заявки */
+var f=document.getElementById('form');
+var dc=document.getElementById('dc'),steam=document.getElementById('steam'),age=document.getElementById('age'),tzn=document.getElementById('tzn');
+var cells=[].slice.call(document.querySelectorAll('#time input'));
+function clean(el,re){
+  var v=el.value.replace(re,'');
+  if(v!==el.value){var pos=(el.selectionStart||0)-(el.value.length-v.length);el.value=v;try{el.setSelectionRange(pos,pos)}catch(x){}}
+}
+function digits(el){clean(el,/\D/g)}
+dc.addEventListener('input',function(){clean(dc,/[^A-Za-z0-9_.]/g)});
+age.addEventListener('input',function(){digits(age)});
+cells.concat([tzn]).forEach(function(el,i,arr){
+  var seq=(el===tzn)?null:cells;
+  el.addEventListener('input',function(){
+    digits(el);
+    var max=+el.dataset.max;
+    if(el.value!==''&&+el.value>max){el.value=el.value.slice(-1)}
+    if(+el.value>max){el.value=''}
+    var v=el.value;
+    if(seq&&v!==''&&(v.length>=2||+(v+'0')>max)){
+      var n=seq[seq.indexOf(el)+1]; if(n){n.focus();n.select()}
+    }
+  });
+  el.addEventListener('keydown',function(e){
+    if(seq&&[' ',',','.','Enter'].indexOf(e.key)>-1){
+      e.preventDefault(); var n=seq[seq.indexOf(el)+1]; if(n){n.focus();n.select()}
+    }
+    if(seq&&e.key==='Backspace'&&el.value===''){
+      var p=seq[seq.indexOf(el)-1]; if(p){e.preventDefault();p.focus()}
+    }
+  });
+});
+cells.concat([tzn,age]).forEach(function(el){
+  el.addEventListener('focus',function(){setTimeout(function(){el.select()},0)});
+});
+[].forEach.call(document.getElementsByName('tzs'),function(r){r.addEventListener('change',function(){tzn.focus()})});
+
+function setErr(id,msg){
+  var e=document.getElementById('e-'+id); e.textContent=msg||'';
+  e.parentNode.classList.toggle('bad',!!msg);
+  return !msg;
+}
+f.addEventListener('submit',function(e){
+  e.preventDefault();
+  var ok=true;
+  ok=setErr('dc',/^[A-Za-z0-9_.]{2,32}$/.test(dc.value)?'':'Только английские буквы (можно цифры, _ и точку), от 2 символов.')&&ok;
+  ok=setErr('steam',/^https?:\/\/(www\.)?steamcommunity\.com\/(id|profiles)\/[A-Za-z0-9_-]+\/?$/.test(steam.value.trim())?'':'Вставьте ссылку на профиль вида steamcommunity.com/id/ваш_ник')&&ok;
+  ok=setErr('time',cells.every(function(c){return c.value!==''})?'':'Заполните месяцы, дни, часы и минуты. Если пусто, впишите 0.')&&ok;
+  var sign=document.querySelector('input[name=tzs]:checked');
+  ok=setErr('tz',(sign&&tzn.value!=='')?'':'Выберите + или − и впишите число часов.')&&ok;
+  ok=setErr('age',(age.value!==''&&+age.value>=13)?'':'Минимальный возраст 13 лет.')&&ok;
+  if(!ok){var bad=f.querySelector('.bad input');if(bad)bad.focus();return}
+  f.hidden=true; document.getElementById('done').hidden=false;
+});
+document.getElementById('again').onclick=function(){f.reset();f.hidden=false;document.getElementById('done').hidden=true};
+</script>
+</body>
+</html>
