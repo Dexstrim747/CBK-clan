@@ -713,14 +713,19 @@ tabsEl.addEventListener('wheel',function(e){
   tabsEl.scrollBy({left:e.deltaY,behavior:'auto'});
 },{passive:false});
 
-/* Оружейная по отрядам и доступ по отряду */
-var SQUADS=['Снайпер','Штурмовик','Техник','Медик','ССО'];
+/* Оружейная: только для Снайпер / Штурмовик / Техник, каждый видит свой отряд */
+var ARMORY_SQUADS=['Снайпер','Штурмовик','Техник'];
 var myProfile=null;
-function noArmory(){return !!(myProfile&&myProfile.squad&&myProfile.squad.trim().toLowerCase()==='antirain')}
+function armorySquad(){
+  if(!myProfile||!myProfile.squad)return '';
+  var v=myProfile.squad.trim().toLowerCase();
+  return ARMORY_SQUADS.filter(function(x){return x.toLowerCase()===v})[0]||'';
+}
 function applyAccess(){
   var b=tabsEl.querySelector('[data-tab="Оружейная"]');
-  if(b){b.hidden=(!myProfile||noArmory())}
-  if(noArmory()&&curTab==='Оружейная'){showTab(TABS[0])}
+  var can=!!armorySquad();
+  if(b){b.hidden=!can}
+  if(!can&&curTab==='Оружейная'){showTab(TABS[0])}
   setTimeout(tabsEdge,50);
 }
 function loadMyProfile(){
@@ -738,29 +743,19 @@ function makePost(x){
   return card;
 }
 function loadArmory(pane){
+  var sq=armorySquad();
+  if(!sq){pane.innerHTML='<p class="empty">Нет доступа.</p>';return}
   pane.innerHTML='<p class="empty">Загружаем...</p>';
-  sb.from('materials').select('title,body,created_at,squad').eq('tab','Оружейная').order('created_at',{ascending:false}).then(function(r){
+  sb.from('materials').select('title,body,created_at,squad').eq('tab','Оружейная').eq('squad',sq).order('created_at',{ascending:false}).then(function(r){
     pane.innerHTML='';
-    var rows=(r.error||!r.data)?[]:r.data;
     if(!r.error){loaded['Оружейная']=true}
-    var bar=document.createElement('div'); bar.className='subtabs';
-    var out=document.createElement('div');
-    function show(sq){
-      [].forEach.call(bar.children,function(b){b.classList.toggle('on',b.textContent===sq)});
-      out.innerHTML='';
-      var list=rows.filter(function(x){return x.squad===sq});
-      if(!list.length){
-        var e=document.createElement('p'); e.className='empty'; e.textContent='Пока пусто. Материалы для отряда «'+sq+'» появятся позже.'; out.appendChild(e); return;
-      }
-      list.forEach(function(x){out.appendChild(makePost(x))});
+    var rows=(r.error||!r.data)?[]:r.data.filter(function(x){return x.squad===sq});
+    var note=document.createElement('p'); note.className='lead'; note.style.marginBottom='20px';
+    note.textContent='Оружейная отряда «'+sq+'»'; pane.appendChild(note);
+    if(!rows.length){
+      var e=document.createElement('p'); e.className='empty'; e.textContent='Пока пусто. Материалы вашего отряда появятся позже.'; pane.appendChild(e); return;
     }
-    SQUADS.forEach(function(sq){
-      var b=document.createElement('button'); b.type='button'; b.className='subtab'; b.textContent=sq;
-      b.onclick=function(){show(sq)}; bar.appendChild(b);
-    });
-    pane.appendChild(bar); pane.appendChild(out);
-    var mine=myProfile&&myProfile.squad?myProfile.squad.trim():'';
-    show(SQUADS.indexOf(mine)>-1?mine:SQUADS[0]);
+    rows.forEach(function(x){pane.appendChild(makePost(x))});
   });
 }
 applyAccess(); /* по умолчанию вкладка скрыта, пока не загружен профиль */
