@@ -142,7 +142,12 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 
 
 /* Учебный центр */
-.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:24px 0 28px;scrollbar-width:none}
+.tabs-wrap{position:relative;margin:24px 0 28px}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none;scroll-behavior:smooth}
+.tabs-arrow{position:absolute;top:0;bottom:1px;width:48px;border:0;color:var(--text);font-size:1.8rem;line-height:1;cursor:pointer;z-index:2;transition:color .2s}
+.tabs-arrow.l{left:0;text-align:left;padding-left:8px;background:linear-gradient(90deg,var(--bg) 45%,transparent)}
+.tabs-arrow.r{right:0;text-align:right;padding-right:8px;background:linear-gradient(270deg,var(--bg) 45%,transparent)}
+.tabs-arrow:hover{color:var(--accent)}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:none;background:none;border:0;color:var(--muted);font:600 .95rem Manrope,system-ui,sans-serif;padding:12px 14px;cursor:pointer;position:relative;transition:color .2s}
 .tab::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transition:transform .25s}
@@ -161,6 +166,10 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 .code-tip-in{display:flex;align-items:center;flex:none;width:max-content;max-width:min(340px,62vw);padding:14px 26px;line-height:1.4;color:var(--accent);font-weight:600;border-left:1px solid var(--line);overflow-wrap:normal;word-break:normal}
 .code:hover,.code.open,.code:focus-visible{grid-template-columns:auto 1fr}
 .code:hover .code-tip,.code.open .code-tip,.code:focus-visible .code-tip{opacity:1}
+.subtabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.subtab{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:8px 16px;font:600 .9rem Manrope,system-ui,sans-serif;cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.subtab:hover{color:var(--text);border-color:var(--accent)}
+.subtab.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .codes{display:grid;gap:12px;justify-items:start}
 .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
 .tbl{width:100%;min-width:760px;border-collapse:collapse}
@@ -308,7 +317,11 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
     <button class="back" id="backA" type="button">Назад</button>
     <h1 class="ah">Учебный центр</h1>
     <p class="lead">Материалы для участников СБК.</p>
-    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="tabs-wrap">
+      <button class="tabs-arrow l" id="tabL" type="button" aria-label="Прокрутить вкладки влево" hidden>&lsaquo;</button>
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <button class="tabs-arrow r" id="tabR" type="button" aria-label="Прокрутить вкладки вправо" hidden>&rsaquo;</button>
+    </div>
     <div id="panes">
       <div class="pane" data-tab="Бой" data-static="1" hidden>
         <div class="tbl-wrap">
@@ -527,7 +540,7 @@ function doLogin(){
   sb.auth.signInWithPassword({email:login+LOGIN_DOMAIN,password:pIn.value}).then(function(r){
     goBtn.disabled=false;
     if(r.error||!r.data||!r.data.user){msg.textContent='Неверный логин или пароль.';return}
-    me=r.data.user; pIn.value=''; closeM(); setHeader();
+    me=r.data.user; pIn.value=''; closeM(); setHeader(); loadMyProfile();
     if(location.hash==='#cabinet'){route()}else{location.hash='#cabinet'}
   }).catch(function(){goBtn.disabled=false;msg.textContent='Не удалось войти. Попробуйте ещё раз.'});
 }
@@ -563,16 +576,16 @@ function loadCabinet(){
 document.getElementById('backC').onclick=function(){location.hash='';route()};
 document.getElementById('logout').onclick=function(){
   sb.auth.signOut().then(function(){
-    me=null; curTab=null; loaded={};
+    me=null; myProfile=null; curTab=null; loaded={};
     [].forEach.call(panesEl.children,function(p){if(!p.dataset.static)p.innerHTML=''});
-    setHeader(); location.hash=''; route();
+    setHeader(); applyAccess(); location.hash=''; route();
   });
 };
 
 if(sb){
   loadCounts();
   sb.auth.getSession().then(function(r){
-    me=(r.data&&r.data.session)?r.data.session.user:null; setHeader();
+    me=(r.data&&r.data.session)?r.data.session.user:null; setHeader(); if(me){loadMyProfile()}
     authReady=true; route();
   });
 }
@@ -580,7 +593,7 @@ if(sb){
 
 /* Учебный центр */
 var authReady=false, curTab=null, loaded={};
-var TABS=['Приказы','Коды','Строевая подготовка','Оружейная','Звания','Перевод','Объявления','Отпуск','Бой','КМБ'];
+var TABS=['Приказы','Коды','Строевая подготовка','Оружейная','Звания','Повышение','Перевод','Объявления','Отпуск','Бой','КМБ'];
 var tabsEl=document.getElementById('tabs'), panesEl=document.getElementById('panes');
 TABS.forEach(function(name){
   var b=document.createElement('button'); b.type='button'; b.className='tab'; b.textContent=name; b.dataset.tab=name;
@@ -591,12 +604,14 @@ TABS.forEach(function(name){
 });
 function showTab(name){
   curTab=name;
-  [].forEach.call(tabsEl.children,function(b){var on=b.dataset.tab===name; b.classList.toggle('on',on); b.setAttribute('aria-selected',on)});
+  [].forEach.call(tabsEl.children,function(b){var on=b.dataset.tab===name; b.classList.toggle('on',on); b.setAttribute('aria-selected',on); if(on){b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}});
+  setTimeout(tabsEdge,80);
   [].forEach.call(panesEl.children,function(p){p.hidden=p.dataset.tab!==name});
   if(!panesEl.querySelector('[data-tab="'+name+'"]').dataset.static&&!loaded[name]){loadMaterials(name)}
 }
 function loadMaterials(name){
   var pane=panesEl.querySelector('[data-tab="'+name+'"]');
+  if(name==='Оружейная'){loadArmory(pane);return}
   pane.innerHTML='<p class="empty">Загружаем...</p>';
   sb.from('materials').select('title,body,created_at').eq('tab',name).order('created_at',{ascending:false}).then(function(r){
     pane.innerHTML='';
@@ -640,6 +655,77 @@ function renderCodes(pane,rows){
   if(!count){box.appendChild(makeCode('64','Ликвидация всех без исключений'))}
   pane.appendChild(box);
 }
+
+/* Прокрутка ряда вкладок */
+var tabL=document.getElementById('tabL'), tabR=document.getElementById('tabR');
+function tabsEdge(){
+  var max=tabsEl.scrollWidth-tabsEl.clientWidth;
+  tabL.hidden=tabsEl.scrollLeft<=2;
+  tabR.hidden=max<=2||tabsEl.scrollLeft>=max-2;
+}
+tabsEl.addEventListener('scroll',tabsEdge);
+window.addEventListener('resize',tabsEdge);
+tabL.onclick=function(){tabsEl.scrollBy({left:-240})};
+tabR.onclick=function(){tabsEl.scrollBy({left:240})};
+tabsEl.addEventListener('wheel',function(e){
+  var max=tabsEl.scrollWidth-tabsEl.clientWidth;
+  if(max<=0||Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;
+  if((e.deltaY<0&&tabsEl.scrollLeft<=0)||(e.deltaY>0&&tabsEl.scrollLeft>=max))return;
+  e.preventDefault();
+  tabsEl.scrollBy({left:e.deltaY,behavior:'auto'});
+},{passive:false});
+
+/* Оружейная по отрядам и доступ по отряду */
+var SQUADS=['Снайпер','Штурмовик','Техник','Медик','ССО'];
+var myProfile=null;
+function noArmory(){return !!(myProfile&&myProfile.squad&&myProfile.squad.trim().toLowerCase()==='antirain')}
+function applyAccess(){
+  var b=tabsEl.querySelector('[data-tab="Оружейная"]');
+  if(b){b.hidden=(!myProfile||noArmory())}
+  if(noArmory()&&curTab==='Оружейная'){showTab(TABS[0])}
+  setTimeout(tabsEdge,50);
+}
+function loadMyProfile(){
+  sb.from('profiles').select('callsign,rank,squad').eq('id',me.id).maybeSingle().then(function(r){
+    myProfile=(r&&r.data)?r.data:null;
+    applyAccess();
+  });
+}
+function makePost(x){
+  var card=document.createElement('article'); card.className='post';
+  var h=document.createElement('h3'); h.textContent=x.title; card.appendChild(h);
+  var t=document.createElement('time');
+  t.textContent=new Date(x.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}); card.appendChild(t);
+  if(x.body){var p=document.createElement('p'); p.textContent=x.body; card.appendChild(p)}
+  return card;
+}
+function loadArmory(pane){
+  pane.innerHTML='<p class="empty">Загружаем...</p>';
+  sb.from('materials').select('title,body,created_at,squad').eq('tab','Оружейная').order('created_at',{ascending:false}).then(function(r){
+    pane.innerHTML='';
+    var rows=(r.error||!r.data)?[]:r.data;
+    if(!r.error){loaded['Оружейная']=true}
+    var bar=document.createElement('div'); bar.className='subtabs';
+    var out=document.createElement('div');
+    function show(sq){
+      [].forEach.call(bar.children,function(b){b.classList.toggle('on',b.textContent===sq)});
+      out.innerHTML='';
+      var list=rows.filter(function(x){return x.squad===sq});
+      if(!list.length){
+        var e=document.createElement('p'); e.className='empty'; e.textContent='Пока пусто. Материалы для отряда «'+sq+'» появятся позже.'; out.appendChild(e); return;
+      }
+      list.forEach(function(x){out.appendChild(makePost(x))});
+    }
+    SQUADS.forEach(function(sq){
+      var b=document.createElement('button'); b.type='button'; b.className='subtab'; b.textContent=sq;
+      b.onclick=function(){show(sq)}; bar.appendChild(b);
+    });
+    pane.appendChild(bar); pane.appendChild(out);
+    var mine=myProfile&&myProfile.squad?myProfile.squad.trim():'';
+    show(SQUADS.indexOf(mine)>-1?mine:SQUADS[0]);
+  });
+}
+applyAccess(); /* по умолчанию вкладка скрыта, пока не загружен профиль */
 </script>
 </body>
 </html>
