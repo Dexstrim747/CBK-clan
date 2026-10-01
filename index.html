@@ -183,6 +183,8 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
 .tbl tbody tr:last-child td{border-bottom:0}
 @media (max-width:560px){.code-tip-in{max-width:min(220px,52vw);padding:12px 18px}}
 
+textarea.in{resize:vertical;min-height:110px;line-height:1.5}
+.cell input[type=date]{width:auto;min-width:9.5rem;text-align:left;color-scheme:dark;padding:8px 4px}
 @media (max-width:700px){.bg::after{display:none}.bg::before{animation:none;-webkit-mask-image:none;mask-image:none;opacity:.2}}
 @media (max-width:560px){nav a:not(.btn){display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -208,7 +210,7 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
       <h1>Дисциплина.<br>Порядок. Результат.</h1>
       <p>Военный клан на сервере Garry's Mod. Здесь собраны устав, состав и всё, что нужно бойцу между операциями.</p>
       <div class="actions">
-        <a class="btn solid" href="#apply">Подать заявку</a>
+        <a class="btn solid" href="#apply" id="heroApply">Подать заявку</a>
         <a class="btn" href="#about">О клане</a>
       </div>
     </div>
@@ -307,7 +309,7 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
     <button class="back" id="backC" type="button">Назад</button>
     <h1 class="ah" id="cName">Кабинет</h1>
     <p class="lead" id="cMeta"></p>
-    <a class="btn solid" href="#academy" style="margin-bottom:36px">Учебный центр</a>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px"><a class="btn solid" href="#academy">Учебный центр</a><a class="btn" href="#leave">Заявка на отпуск</a></div>
     <h2>Состав клана</h2>
     <ul class="ranks" id="cList"></ul>
     <button class="btn" id="logout" type="button" style="margin-top:32px">Выйти</button>
@@ -351,6 +353,40 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.9rem;bo
       </div>
     </div>
   </div>
+
+  <div class="wrap apply" id="leave" hidden>
+    <button class="back" id="backL" type="button">Назад</button>
+    <h1 class="ah">Заявка на отпуск</h1>
+    <p class="lead">Заявка уходит командованию на почту.</p>
+    <form id="lform" novalidate>
+      <div class="field">
+        <label for="lnick">Никнейм</label>
+        <input class="in" id="lnick" maxlength="40" autocomplete="off">
+        <div class="err" id="e-lnick"></div>
+      </div>
+      <div class="field">
+        <label for="lreason">Причина</label>
+        <textarea class="in" id="lreason" rows="4" maxlength="500"></textarea>
+        <div class="err" id="e-lreason"></div>
+      </div>
+      <div class="field">
+        <label>Срок</label>
+        <div class="seg">
+          <label class="cell"><span>с</span><input type="date" id="lfrom" aria-label="Дата начала отпуска"></label>
+          <label class="cell"><span>по</span><input type="date" id="lto" aria-label="Дата окончания отпуска"></label>
+        </div>
+        <div class="err" id="e-lterm"></div>
+      </div>
+      <input type="checkbox" id="botcheck2" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0">
+      <button class="btn solid" id="lsend" type="submit">Отправить заявку</button>
+      <div class="err" id="e-lsend" role="alert"></div>
+    </form>
+    <div class="done" id="ldone" hidden>
+      <h2>Заявка отправлена</h2>
+      <p>Командование рассмотрит её и сообщит решение.</p>
+      <button class="btn" id="lagain" type="button">Вернуться на главную страницу</button>
+    </div>
+  </div>
 </main>
 
 <footer>СБК. Сайт не имеет никакого отношения к реальным военным отрядам, взводам и так далее. Сайт создан в целях координации участников клана. Клан был создан на сервере Garry's Mod.</footer>
@@ -389,14 +425,16 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM()});
 document.getElementById('go').onclick=function(){msg.textContent='Демо-версия: вход ещё не подключён к базе.'};
 
 /* Страницы: главная и заявка */
-var home=document.getElementById('home'),apply=document.getElementById('apply'),hist=document.getElementById('history'),cab=document.getElementById('cabinet'),acad=document.getElementById('academy');
+var home=document.getElementById('home'),apply=document.getElementById('apply'),hist=document.getElementById('history'),cab=document.getElementById('cabinet'),acad=document.getElementById('academy'),leave=document.getElementById('leave');
 function route(){
-  var h=location.hash,isA=(h==='#apply'),isH=(h==='#history'),isC=(h==='#cabinet'),isAc=(h==='#academy');
-  if((isC||isAc)&&authReady&&!me){location.hash='';openM();return}
-  home.hidden=isA||isH||isC||isAc; apply.hidden=!isA; hist.hidden=!isH; cab.hidden=!isC; acad.hidden=!isAc;
+  var h=location.hash,isA=(h==='#apply'),isH=(h==='#history'),isC=(h==='#cabinet'),isAc=(h==='#academy'),isL=(h==='#leave');
+  if((isC||isAc||isL)&&authReady&&!me){location.hash='';openM();return}
+  if(isA&&me){location.hash='#leave';return}
+  home.hidden=isA||isH||isC||isAc||isL; apply.hidden=!isA; hist.hidden=!isH; cab.hidden=!isC; acad.hidden=!isAc; leave.hidden=!isL;
   if(isC&&me){loadCabinet()}
   if(isAc&&me&&!curTab){showTab(TABS[0])}
-  if(isA||isH||isC||isAc){window.scrollTo(0,0)}
+  if(isL&&me){prepLeave()}
+  if(isA||isH||isC||isAc||isL){window.scrollTo(0,0)}
   else if(h.length>1){var t=document.getElementById(h.slice(1)); if(t){t.scrollIntoView()}}
   else{window.scrollTo(0,0)}
 }
@@ -525,7 +563,7 @@ try{sb=window.supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 var loginBtn=document.getElementById('openLogin');
 var uIn=document.getElementById('u'),pIn=document.getElementById('p'),goBtn=document.getElementById('go');
 
-function setHeader(){loginBtn.textContent=me?'Кабинет':'Вход для участников'; document.getElementById('navAcademy').hidden=!me}
+function setHeader(){loginBtn.textContent=me?'Кабинет':'Вход для участников'; document.getElementById('navAcademy').hidden=!me; var ha=document.getElementById('heroApply'); ha.textContent=me?'Заявка на отпуск':'Подать заявку'; ha.setAttribute('href',me?'#leave':'#apply')}
 loginBtn.onclick=function(){if(me){location.hash='#cabinet'}else{openM()}};
 uIn.addEventListener('input',function(){clean(uIn,/[^A-Za-z0-9_.-]/g)});
 uIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();pIn.focus()}});
@@ -688,7 +726,7 @@ function applyAccess(){
 function loadMyProfile(){
   sb.from('profiles').select('callsign,rank,squad').eq('id',me.id).maybeSingle().then(function(r){
     myProfile=(r&&r.data)?r.data:null;
-    applyAccess();
+    applyAccess(); prepLeave();
   });
 }
 function makePost(x){
@@ -726,6 +764,55 @@ function loadArmory(pane){
   });
 }
 applyAccess(); /* по умолчанию вкладка скрыта, пока не загружен профиль */
+
+/* Заявка на отпуск */
+var lform=document.getElementById('lform'),lnick=document.getElementById('lnick'),lreason=document.getElementById('lreason'),lfrom=document.getElementById('lfrom'),lto=document.getElementById('lto');
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function fmtDate(d){return d.split('-').reverse().join('.')}
+function prepLeave(){
+  var t=todayStr(); lfrom.min=t; lto.min=lfrom.value||t;
+  if(!lnick.value&&myProfile&&myProfile.callsign){lnick.value=myProfile.callsign}
+}
+lfrom.addEventListener('change',function(){
+  lto.min=lfrom.value||todayStr();
+  if(lto.value&&lto.value<lfrom.value){lto.value=lfrom.value}
+});
+function showLeaveDone(){document.getElementById('backL').hidden=true; lform.hidden=true; document.getElementById('ldone').hidden=false}
+lform.addEventListener('submit',function(e){
+  e.preventDefault();
+  var nick=lnick.value.trim(), reason=lreason.value.trim(), ok=true;
+  ok=setErr('lnick',nick.length>=2?'':'Введите никнейм.')&&ok;
+  ok=setErr('lreason',reason.length>=5?'':'Опишите причину отпуска.')&&ok;
+  var tm='';
+  if(!lfrom.value||!lto.value){tm='Укажите даты начала и конца отпуска.'}
+  else if(lfrom.value<todayStr()){tm='Дата начала не может быть в прошлом.'}
+  else if(lto.value<lfrom.value){tm='Дата окончания раньше даты начала.'}
+  ok=setErr('lterm',tm)&&ok;
+  if(!ok){var bad=lform.querySelector('.bad input, .bad textarea'); if(bad)bad.focus(); return}
+  var eS=document.getElementById('e-lsend'), btn=document.getElementById('lsend'); eS.textContent='';
+  if(document.getElementById('botcheck2').checked){showLeaveDone();return}
+  var days=Math.round((Date.parse(lto.value)-Date.parse(lfrom.value))/86400000)+1;
+  var payload={
+    access_key:'1802e89a-5989-42e7-9937-6b658a89dad2',
+    subject:'Заявка на отпуск',
+    from_name:'Сайт СБК',
+    nickname:nick,
+    reason:reason,
+    period:'с '+fmtDate(lfrom.value)+' по '+fmtDate(lto.value)+' ('+days+' дн.)',
+    account:(me&&me.email)?me.email.split('@')[0]:''
+  };
+  btn.disabled=true; btn.textContent='Отправляем...';
+  fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(d){if(d&&d.success){showLeaveDone()}else{throw new Error('fail')}})
+    .catch(function(){eS.textContent='Не удалось отправить заявку. Проверьте интернет и попробуйте ещё раз.'})
+    .then(function(){btn.disabled=false;btn.textContent='Отправить заявку'});
+});
+document.getElementById('lagain').onclick=function(){
+  lform.reset(); lform.hidden=false; document.getElementById('ldone').hidden=true; document.getElementById('backL').hidden=false;
+  location.hash=''; route();
+};
+document.getElementById('backL').onclick=function(){location.hash='#cabinet'};
 </script>
 </body>
 </html>
